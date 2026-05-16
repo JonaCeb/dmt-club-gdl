@@ -1,0 +1,90 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { useTheme } from "@/context/ThemeContext";
+import { gsap } from "gsap";
+
+export default function CustomCursor() {
+  const { isNight } = useTheme();
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const followerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Desactivar en dispositivos móviles (pantallas táctiles)
+    if (window.matchMedia("(max-width: 768px)").matches) return;
+
+    const cursor = cursorRef.current;
+    const follower = followerRef.current;
+
+    if (!cursor || !follower) return;
+
+    // Ocultar cursor original
+    document.body.style.cursor = "none";
+
+    // Configurar animaciones rápidas de seguimiento con GSAP
+    const xToCursor = gsap.quickTo(cursor, "x", { duration: 0.1, ease: "power3.out" });
+    const yToCursor = gsap.quickTo(cursor, "y", { duration: 0.1, ease: "power3.out" });
+
+    const xToFollower = gsap.quickTo(follower, "x", { duration: 0.4, ease: "power3.out" });
+    const yToFollower = gsap.quickTo(follower, "y", { duration: 0.4, ease: "power3.out" });
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Ajustar posiciones centrando los divs (restar la mitad de su tamaño)
+      xToCursor(e.clientX - 4);
+      yToCursor(e.clientY - 4);
+      xToFollower(e.clientX - 16);
+      yToFollower(e.clientY - 16);
+    };
+
+    // Efecto Hover sobre elementos interactivos (enlaces, botones, selectores)
+    const handleMouseOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "BUTTON" || 
+        target.tagName === "A" || 
+        target.closest("button") || 
+        target.closest("a") ||
+        target.tagName === "SELECT" ||
+        target.tagName === "INPUT"
+      ) {
+        gsap.to(follower, { scale: 2, backgroundColor: "rgba(255,255,255,0.2)", duration: 0.3 });
+        gsap.to(cursor, { scale: 0, duration: 0.2 });
+      }
+    };
+
+    const handleMouseOut = () => {
+      gsap.to(follower, { scale: 1, backgroundColor: "transparent", duration: 0.3 });
+      gsap.to(cursor, { scale: 1, duration: 0.2 });
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseover", handleMouseOver);
+    window.addEventListener("mouseout", handleMouseOut);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseover", handleMouseOver);
+      window.removeEventListener("mouseout", handleMouseOut);
+      document.body.style.cursor = "auto";
+    };
+  }, []);
+
+  return (
+    <>
+      {/* Punto Central Firme */}
+      <div
+        ref={cursorRef}
+        className={`fixed top-0 left-0 w-2 h-2 rounded-full pointer-events-none z-[9999] hidden md:block transition-colors duration-[1500ms] ${
+          isNight ? "bg-[#00F2FE]" : "bg-[#D4AF37]"
+        }`}
+      />
+      {/* Círculo Fluido de Seguimiento */}
+      <div
+        ref={followerRef}
+        className={`fixed top-0 left-0 w-8 h-8 rounded-full pointer-events-none z-[9998] hidden md:block border mix-blend-difference transition-colors duration-[1500ms] ${
+          isNight ? "border-[#00F2FE]/50 shadow-[0_0_15px_rgba(0,242,254,0.1)]" : "border-[#D4AF37]/50"
+        }`}
+      />
+    </>
+  );
+}
