@@ -1,74 +1,34 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  type ReactNode,
-} from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
-interface ThemeContextType {
+type ThemeContextType = {
   isNight: boolean;
   toggleTheme: () => void;
-  setNight: (value: boolean) => void;
-}
+};
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-interface ThemeProviderProps {
-  children: ReactNode;
-}
-
-export function ThemeProvider({ children }: ThemeProviderProps) {
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [isNight, setIsNight] = useState<boolean>(true);
-  const [mounted, setMounted] = useState<boolean>(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-
-    const root = document.documentElement;
-    if (isNight) {
-      root.classList.add("night");
-      root.classList.remove("day");
-    } else {
-      root.classList.add("day");
-      root.classList.remove("night");
-    }
-  }, [isNight, mounted]);
-
-  const toggleTheme = useCallback(() => {
+  const toggleTheme = () => {
     setIsNight((prev) => !prev);
-  }, []);
-
-  const setNight = useCallback((value: boolean) => {
-    setIsNight(value);
-  }, []);
-
-  const value: ThemeContextType = {
-    isNight,
-    toggleTheme,
-    setNight,
   };
 
   return (
-    <ThemeContext.Provider value={value}>
-      {children}
+    <ThemeContext.Provider value={{ isNight, toggleTheme }}>
+      <div className={`transition-colors duration-1000 ${isNight ? "bg-[#050505] text-white" : "bg-[#F4F4F4] text-[#111111]"}`}>
+        {children}
+      </div>
     </ThemeContext.Provider>
   );
 }
 
-export function useTheme(): ThemeContextType {
+export function useTheme() {
   const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
+  if (!context) {
+    throw new Error("useTheme debe ser usado dentro de un ThemeProvider");
   }
   return context;
 }
-
-export { ThemeContext };
